@@ -1,6 +1,7 @@
 # Import Modules
 import numpy as np
-
+import pandas as pd
+from pandas import DataFrame
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
@@ -41,7 +42,10 @@ def welcome():
     return (
         f"Available Routes:<br/>"
         f"/api/v1.0/precipitation<br/>"
-        f"/api/v1.0/station"
+        f"/api/v1.0/station<br/>"
+        f"/api/v1.0/tobs<br/>"
+        f"/api/v1.0/start<br/>"
+        f"/api/v1.0/start/end<br/>"
     )
 
 
@@ -67,13 +71,13 @@ def precipitation():
     # Create our session (link) from Python to the DB
     session = Session(engine)
 
-    """Return a list of passenger data including the name, age, and sex of each passenger"""
-    # Query all passengers
+    """Return a list of measurement data"""
+    # Query all data
     results = session.query(Measurement.station, Measurement.date, Measurement.prcp, Measurement.tobs).all()
 
     session.close()
 
-    # Create a dictionary from the row data and append to a list of all_passengers
+    # Create a dictionary from the row data and append to a list of precip_data
     precip_data = []
     for station, date, prcp, tobs in results:
         precip_dict = {}
@@ -86,6 +90,33 @@ def precipitation():
 
     return jsonify(precip_data)
 
+@app.route("/api/v1.0/tobs")
+def tobs():
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+
+    """get the data from the most busy station"""
+    # Query all data
+   
+    results = session.query(Measurement.station, Measurement.date, Measurement.prcp, Measurement.tobs).\
+        filter(Measurement.station == 'USC00519281').\
+        filter(Measurement.date >= '2016-08-23') and (Measurement.date <= '2017-08-23')
+
+    # Create a dictionary from the row data and append to a list of precip_data
+    active_data = []
+    for station, date, prcp, tobs in results:
+        active_dict = {}
+        active_dict["station"] = station
+        active_dict["date"] = date
+        active_dict["prcp"] = prcp
+        active_dict["tobs"] = tobs
+        
+        active_data.append(active_dict)
+
+    return jsonify(active_data)
+
+
+    session.close()
 
 if __name__ == '__main__':
     app.run(debug=True)
