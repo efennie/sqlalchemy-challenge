@@ -52,7 +52,7 @@ def station():
 
     """Return a list of all stations"""
     # Query all stations
-    results = session.query(Station.station).all()
+    results = session.query(Station.station, Station.name).all()
 
     session.close()
 
