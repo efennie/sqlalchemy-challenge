@@ -102,7 +102,7 @@ def tobs():
         filter(Measurement.station == 'USC00519281').\
         filter(Measurement.date >= '2016-08-23') and (Measurement.date <= '2017-08-23')
 
-    # Create a dictionary from the row data and append to a list of precip_data
+    # Create a dictionary from the row data and append to a list of active_data
     active_data = []
     for station, date, prcp, tobs in results:
         active_dict = {}
