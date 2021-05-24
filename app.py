@@ -97,18 +97,18 @@ def tobs():
 
     """get the data from the most busy station"""
     # Query all data
-   
-    results = session.query(Measurement.station, Measurement.date, Measurement.prcp, Measurement.tobs).\
+
+    results = session.query(Measurement.station, Measurement.date, Measurement.tobs).\
         filter(Measurement.station == 'USC00519281').\
-        filter(Measurement.date >= '2016-08-23') and (Measurement.date <= '2017-08-23')
+        filter(Measurement.date >= '2016-08-23').\
+        filter(Measurement.date <= '2017-08-23')
 
     # Create a dictionary from the row data and append to a list of active_data
     active_data = []
-    for station, date, prcp, tobs in results:
+    for station, date, tobs in results:
         active_dict = {}
         active_dict["station"] = station
         active_dict["date"] = date
-        active_dict["prcp"] = prcp
         active_dict["tobs"] = tobs
         
         active_data.append(active_dict)
