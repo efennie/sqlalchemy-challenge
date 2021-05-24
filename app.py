@@ -2,10 +2,12 @@
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
+from pandas.io import json
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
+from datetime import datetime
 
 from flask import Flask, jsonify
 
@@ -114,6 +116,25 @@ def tobs():
         active_data.append(active_dict)
 
     return jsonify(active_data)
+
+@app.route("/api/v1.0/start/<date>")
+def precip_calculations(search):
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+    output = []
+    search_string = Measurement.date['search']
+
+    """Return a list of measurement data"""
+    # Query all data
+    if search_string:
+        if Measurement.date['select'] == 'date':
+            query = session.query(Measurement.station, Measurement.date, Measurement.tobs)\
+                .filter(Measurement.date <= Measurement.date.contains(search_string)).all()
+            return jsonify(query)
+        
+        else:
+            return('error message yall')
+
 
 
     session.close()
