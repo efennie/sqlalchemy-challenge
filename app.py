@@ -7,9 +7,9 @@ import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
-from datetime import datetime
+import datetime
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 #################################################
 # Database Setup
@@ -123,6 +123,8 @@ def precip_calculations(search):
     session = Session(engine)
     output = []
     search_string = Measurement.date['search']
+#    initial_date = dt.date(2017,8,23)
+#    prev_year = dt.date(2017, 8, 23) - dt.timedelta(days=365)
 
     """Return a list of measurement data"""
     # Query all data
@@ -135,8 +137,34 @@ def precip_calculations(search):
         else:
             return('error message yall')
 
+def converttodate(dateString): 
+    return datetime.datetime.strptime(dateString, "%Y-%m-%d").date()
+
+@app.route("/api/v1.0/practice/<start>")
+    
+def event(start):
+    session = Session(engine)
+    date_provided = request.args.get('start', default = datetime.date.today(), type = converttodate)
+
+    start_var = session.query(Measurement.station, Measurement.date, Measurement.tobs).\
+        filter(Measurement.date <= date_provided)
 
 
+    # Create a dictionary from the row data and append to a list of active_data
+    filtered_data = []
+    for station, date, tobs in start_var:
+        filtered = {}
+        filtered["station"] = station
+        filtered["date"] = date
+        filtered["tobs"] = tobs
+        
+        filtered_data.append(filtered)
+
+    return jsonify(filtered_data)
+
+    #return start_var
+
+    
     session.close()
 
 if __name__ == '__main__':
