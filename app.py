@@ -99,7 +99,10 @@ def tobs():
 
     """get the data from the most busy station"""
     # Query all data
-
+        #this is also an option:
+        #initial_date = dt.date(2017,8,23)
+        #prev_year = dt.date(2017, 8, 23) - dt.timedelta(days=365)
+        
     results = session.query(Measurement.station, Measurement.date, Measurement.tobs).\
         filter(Measurement.station == 'USC00519281').\
         filter(Measurement.date >= '2016-08-23').\
@@ -123,8 +126,7 @@ def precip_calculations(search):
     session = Session(engine)
     output = []
     search_string = Measurement.date['search']
-#    initial_date = dt.date(2017,8,23)
-#    prev_year = dt.date(2017, 8, 23) - dt.timedelta(days=365)
+
 
     """Return a list of measurement data"""
     # Query all data
@@ -144,7 +146,7 @@ def converttodate(dateString):
     
 def event(start):
     session = Session(engine)
-    date_provided = request.args.get('start', default = datetime.date.today(), type = converttodate)
+    date_provided = request.args.get('start', default = None, type = converttodate)
 
     start_var = session.query(Measurement.station, Measurement.date, Measurement.tobs).\
         filter(Measurement.date <= date_provided)
