@@ -46,8 +46,9 @@ def welcome():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/station<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/start<br/>"
-        f"/api/v1.0/start/end<br/>"
+        f"/api/v1.0/weatherstats/start<br/>"
+        f"/api/v1.0/weatherstats/start/end"
+
     )
 
 
@@ -77,8 +78,6 @@ def precipitation():
     # Query all data
     results = session.query(Measurement.station, Measurement.date, Measurement.prcp, Measurement.tobs).all()
 
-    session.close()
-
     # Create a dictionary from the row data and append to a list of precip_data
     precip_data = []
     for station, date, prcp, tobs in results:
@@ -100,9 +99,8 @@ def tobs():
     """get the data from the most busy station"""
     # Query all data
         #this is also an option:
-        #initial_date = dt.date(2017,8,23)
-        #prev_year = dt.date(2017, 8, 23) - dt.timedelta(days=365)
-        
+        #using datetime delta instead of hardcoding the dates
+
     results = session.query(Measurement.station, Measurement.date, Measurement.tobs).\
         filter(Measurement.station == 'USC00519281').\
         filter(Measurement.date >= '2016-08-23').\
@@ -120,55 +118,37 @@ def tobs():
 
     return jsonify(active_data)
 
-@app.route("/api/v1.0/start/<date>")
-def precip_calculations(search):
+@app.route("/api/v1.0/weatherstats/<start>")
+@app.route("/api/v1.0/weatherstats/<start>/<end>")
+
+def search_criteria(start=None, end=None):
     # Create our session (link) from Python to the DB
     session = Session(engine)
-    output = []
-    search_string = Measurement.date['search']
+    search_date = [func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)]
 
 
     """Return a list of measurement data"""
-    # Query all data
-    if search_string:
-        if Measurement.date['select'] == 'date':
-            query = session.query(Measurement.station, Measurement.date, Measurement.tobs)\
-                .filter(Measurement.date <= Measurement.date.contains(search_string)).all()
-            return jsonify(query)
-        
-        else:
-            return('error message yall')
+    # Query and filter dates according to the search criteria
+    if not end:
+        filtered_data = session.query(*search_date).\
+            filter(Measurement.date >= start).all()
+        weather_stats = list(np.ravel(search_date))
+        return jsonify(filtered_data)
 
-def converttodate(dateString): 
-    return datetime.datetime.strptime(dateString, "%Y-%m-%d").date()
+    #get stats info when we have both start date and target end date
 
-@app.route("/api/v1.0/practice/<start>")
-    
-def event(start):
-    session = Session(engine)
-    date_provided = request.args.get('start', default = None, type = converttodate)
+    if end!= None:
 
-    start_var = session.query(Measurement.station, Measurement.date, Measurement.tobs).\
-        filter(Measurement.date <= date_provided)
+        search_end_included = session.query(*search_date).\
+            filter(Measurement.date >= start).\
+            filter(Measurement.date <= end).all()
 
+    #unravel query findings and create a list to be printed
+        weather_stats = list(np.ravel(search_end_included))
+        return jsonify(search_end_included)
 
-    # Create a dictionary from the row data and append to a list of active_data
-    filtered_data = []
-    for station, date, tobs in start_var:
-        filtered = {}
-        filtered["station"] = station
-        filtered["date"] = date
-        filtered["tobs"] = tobs
-        
-        filtered_data.append(filtered)
-
-    return jsonify(filtered_data)
-
-    #return start_var
-
-    
-    session.close()
 
 if __name__ == '__main__':
     app.run(debug=True)
 
+    session.close()
